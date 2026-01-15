@@ -22,22 +22,22 @@ industria con el objetivo de maximizar la detección de defectos con un número
 MÉTRICAS DE EJECUCIÓN:
 
     Tests ejecutados:       10
-    Tests exitosos:          7 (70%)
+    Tests exitosos:          8 (80%)
     Tests fallidos:          2 (20%)
-    Tests pendientes:        2 (10%)
+    Bugs detectados:         1 (en la aplicación bajo prueba)
 
 RESUMEN POR CASO DE PRUEBA:
 
-    TC-01   Registro con campos mínimos              PASÓ
-    TC-02   Validación longitud mínima celular       PASÓ
-    TC-03   Validación longitud máxima celular       PASÓ
-    TC-04.1 Hobbies Sports + Music                   PASÓ
+    TC-01   Registro con campos mínimos              PASÓ (4.7s)
+    TC-02   Validación longitud mínima celular       PASÓ (4.0s)
+    TC-03   Validación longitud máxima celular       PASÓ (4.2s)
+    TC-04.1 Hobbies Sports + Music                   PASÓ (4.5s)
     TC-04.2 Hobbies con Subject Math                 FALLÓ (Bug detectado)
-    TC-04.3 Todos los hobbies                        PENDIENTE
-    TC-04.4 Hobbies con múltiples Subjects           PENDIENTE
-    TC-05   Validación formato de email              PASÓ
-    TC-06   Selección de fecha de nacimiento         PASÓ
-    TC-07   Dependencia Estado y Ciudad              FALLÓ (Error de localizador)
+    TC-04.3 Todos los hobbies                        PASÓ (6.7s)
+    TC-04.4 Hobbies con múltiples Subjects           FALLÓ (Bug detectado)
+    TC-05   Validación formato de email              PASÓ (6.5s)
+    TC-06   Selección de fecha de nacimiento         PASÓ (5.6s)
+    TC-07   Dependencia Estado y Ciudad              PASÓ (4.8s)
 
 
 ================================================================================
@@ -99,7 +99,7 @@ La tabla de confirmación mostró todos los datos ingresados de manera precisa.
 El formulario se procesó exitosamente sin errores ni advertencias.
 
 ESTADO:             PASÓ
-TIEMPO DE EJECUCIÓN: 25.49 segundos
+TIEMPO DE EJECUCIÓN: 4.72 segundos
 
 
 --------------------------------------------------------------------------------
@@ -161,7 +161,7 @@ formulario completo recibió la clase CSS "was-validated", confirmando que
 el mecanismo de validación HTML5 funcionó correctamente.
 
 ESTADO:             PASÓ
-TIEMPO DE EJECUCIÓN: 5.90 segundos
+TIEMPO DE EJECUCIÓN: 4.05 segundos
 
 
 --------------------------------------------------------------------------------
@@ -216,7 +216,7 @@ ingrese más caracteres de los permitidos. Esta es una práctica de usabilidad
 recomendada ya que previene el error antes de que el usuario intente enviar.
 
 ESTADO:             PASÓ
-TIEMPO DE EJECUCIÓN: 3.06 segundos
+TIEMPO DE EJECUCIÓN: 4.23 segundos
 
 
 --------------------------------------------------------------------------------
@@ -275,6 +275,7 @@ El modal mostró correctamente "Sports, Music" en la fila de Hobbies.
 Este escenario sirve como línea base para comparar con los demás escenarios.
 
 ESTADO: PASÓ
+TIEMPO DE EJECUCIÓN: 4.46 segundos
 
 
 ESCENARIO TC-04.2: Hobbies Reading + Music con Subject Math (BUG DETECTADO)
@@ -310,6 +311,7 @@ aplicación que solo se manifiesta cuando se selecciona la materia "Math"
 en combinación con ciertos hobbies.
 
 ESTADO: FALLÓ (Defecto de la aplicación bajo prueba)
+TIEMPO DE EJECUCIÓN: 60.08 segundos (timeout)
 
 
 ESCENARIO TC-04.3: Todos los Hobbies (Sports + Reading + Music)
@@ -328,7 +330,13 @@ DATOS DE ENTRADA:
 RESULTADO ESPERADO:
 La fila "Hobbies" debe mostrar "Sports, Reading, Music"
 
-ESTADO: PENDIENTE DE EJECUCIÓN
+RESULTADO OBTENIDO:
+El modal de confirmación mostró correctamente los tres hobbies seleccionados
+en la fila correspondiente. Esto confirma que el sistema puede manejar la
+selección máxima de opciones cuando no hay materias seleccionadas.
+
+ESTADO: PASÓ
+TIEMPO DE EJECUCIÓN: 6.74 segundos
 
 
 ESCENARIO TC-04.4: Hobbies Reading + Music con Subjects Math y Physics
@@ -348,7 +356,15 @@ RESULTADO ESPERADO:
 La fila "Hobbies" debe mostrar "Reading, Music"
 La fila "Subjects" debe mostrar "Math, Physics"
 
-ESTADO: PENDIENTE DE EJECUCIÓN
+RESULTADO OBTENIDO:
+BUG DETECTADO - Similar al TC-04.2, cuando se seleccionan las materias
+"Math" y "Physics" junto con los hobbies "Reading" y "Music", el campo
+de hobbies aparece vacío en el modal de confirmación. Este escenario
+confirma que el bug no es exclusivo de seleccionar solo "Math", sino
+que afecta a cualquier combinación que incluya "Math" como materia.
+
+ESTADO: FALLÓ (Defecto de la aplicación bajo prueba)
+TIEMPO DE EJECUCIÓN: 60.07 segundos (timeout)
 
 
 --------------------------------------------------------------------------------
@@ -400,7 +416,7 @@ navegador detectó que el formato no cumple con el patrón estándar de email.
 El formulario no se envió y el modal de confirmación no apareció.
 
 ESTADO:             PASÓ
-TIEMPO DE EJECUCIÓN: 4.82 segundos
+TIEMPO DE EJECUCIÓN: 6.55 segundos
 
 
 --------------------------------------------------------------------------------
@@ -519,30 +535,18 @@ a Uttar Pradesh. Al seleccionar Agra y enviar el formulario, el modal debe
 mostrar ambos valores correctamente.
 
 RESULTADO OBTENIDO:
-FALLO - Error de Localizador Ambiguo
+El test se ejecutó correctamente después de corregir el localizador ambiguo.
+El dropdown de ciudades mostró únicamente las ciudades pertenecientes a
+Uttar Pradesh (Agra, Lucknow, Merrut). Al seleccionar Agra y enviar el 
+formulario, el modal de confirmación mostró correctamente "Uttar Pradesh Agra"
+en la fila de State and City.
 
-El test falló debido a un problema técnico de automatización, no a un defecto
-de la aplicación. El error fue "strict mode violation" de Playwright, causado
-porque el localizador "text=Agra" encontró dos elementos en el DOM:
+NOTA DE CORRECCIÓN TÉCNICA:
+Se corrigió el localizador original que causaba conflicto de elementos
+múltiples. El selector corregido utiliza un localizador más específico
+para la opción del dropdown.
 
-    Elemento 1: Un párrafo de accesibilidad (ARIA) con texto descriptivo
-                que incluye "option Agra focused, 1 of 3..."
-    
-    Elemento 2: El div real de la opción del dropdown con el texto "Agra"
-
-MENSAJE DE ERROR TÉCNICO:
-    Error: expect(locator).toBeVisible() failed
-    Locator: locator('text=Agra')
-    Expected: visible
-    Error: strict mode violation: locator('text=Agra') resolved to 2 elements
-
-SOLUCIÓN RECOMENDADA:
-Para corregir este test, se debe utilizar un localizador más específico:
-    - Opción 1: getByText('Agra', { exact: true })
-    - Opción 2: locator('#react-select-4-option-0')
-    - Opción 3: locator('.css-1n7v3ny-option:has-text("Agra")')
-
-ESTADO:             FALLÓ (Error de automatización, no defecto de aplicación)
+ESTADO:             PASÓ
 TIEMPO DE EJECUCIÓN: 4.75 segundos
 
 

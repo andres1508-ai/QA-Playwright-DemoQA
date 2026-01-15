@@ -79,9 +79,18 @@ test.describe('Suite de Pruebas - Formulario de Registro DemoQA', () => {
         // Navegar al formulario de práctica
         await page.goto(URL_FORMULARIO);
         
+        // Esperar a que la página cargue completamente
+        await page.waitForLoadState('domcontentloaded');
+        
         // Ocultar elementos publicitarios y footer para evitar interferencias
         // Esto es necesario porque los anuncios pueden bloquear los clicks
         await page.evaluate(() => {
+            // Cerrar modales abiertos si existen
+            const modal = document.querySelector('.modal.show');
+            if (modal) modal.classList.remove('show');
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) backdrop.remove();
+            
             const elementosAOcultar = document.querySelectorAll(
                 '#adplus-anchor, #fixedban, iframe, .google-auto-placed'
             );
