@@ -283,6 +283,145 @@ Error: strict mode violation: locator('text=Agra') resolved to 2 elements
 
 ---
 
+## Justificación de la Estrategia de Pruebas
+
+### Objetivo de la Estrategia
+Diseñar una suite de pruebas automatizadas que maximice la cobertura de defectos con el menor número de casos de prueba posibles, aplicando técnicas de testing reconocidas en la industria.
+
+### Técnicas Aplicadas y Justificación
+
+#### 1. Partición de Equivalencia (Equivalence Partitioning)
+**Aplicada en:** TC-01, TC-05
+
+**¿Qué es?**
+Divide los datos de entrada en clases (grupos) donde todos los valores de una clase se comportan de manera equivalente. Solo se necesita probar un valor representativo de cada clase.
+
+**¿Cómo se aplicó?**
+- **TC-01 (Clase Válida):** Se probó un registro con datos válidos mínimos. Si funciona con estos datos, funcionará con cualquier combinación válida similar.
+- **TC-05 (Clase Inválida):** Se probó un email sin extensión de dominio (`test@test`). Representa toda la clase de emails mal formateados.
+
+**¿Por qué esta técnica?**
+Reduce drásticamente el número de pruebas necesarias. En lugar de probar miles de combinaciones de nombres válidos, probamos una sola que representa a todas.
+
+---
+
+#### 2. Análisis de Valores Límite (Boundary Value Analysis - BVA)
+**Aplicada en:** TC-02, TC-03
+
+**¿Qué es?**
+Los defectos tienden a concentrarse en los límites de los rangos de entrada. Esta técnica prueba específicamente los valores en y alrededor de estos límites.
+
+**¿Cómo se aplicó?**
+El campo "Mobile" tiene un rango válido de exactamente 10 dígitos:
+
+| Valor | Dígitos | Tipo de Límite | Caso de Prueba |
+|-------|---------|----------------|----------------|
+| 123456789 | 9 | Min - 1 (inválido) | TC-02 |
+| 1234567890 | 10 | Valor válido | TC-01 |
+| 12345678901 | 11 | Max + 1 (inválido) | TC-03 |
+
+**¿Por qué esta técnica?**
+Estadísticamente, los errores de programación ocurren más frecuentemente en los límites (usar `<` en lugar de `<=`, por ejemplo). Probar estos puntos específicos tiene alta probabilidad de encontrar defectos.
+
+---
+
+#### 3. Pruebas Combinatorias (Combinatorial Testing)
+**Aplicada en:** TC-04 (4 escenarios), TC-07
+
+**¿Qué es?**
+Prueba diferentes combinaciones de parámetros de entrada para detectar defectos que solo aparecen cuando ciertos valores interactúan entre sí.
+
+**¿Cómo se aplicó?**
+Para el TC-04 (Hobbies), se creó una matriz de combinaciones:
+
+| Escenario | Subjects | Hobbies | Propósito |
+|-----------|----------|---------|-----------|
+| TC-04.1 | Ninguno | Sports + Music | Baseline sin subjects |
+| TC-04.2 | Math | Reading + Music | **Detectar bug de interacción** |
+| TC-04.3 | Ninguno | Todos (3) | Máxima selección |
+| TC-04.4 | Math + Physics | Reading + Music | Múltiples en ambos |
+
+**¿Por qué esta técnica?**
+El bug reportado (hobbies vacíos) **solo ocurre** cuando se combina Subject "Math" con ciertos hobbies. Sin pruebas combinatorias, este defecto pasaría desapercibido.
+
+---
+
+#### 4. Manejo de Elementos Dinámicos
+**Aplicada en:** TC-06
+
+**¿Qué es?**
+Técnica específica para automatización que aborda elementos de UI que cambian dinámicamente (calendarios, dropdowns con búsqueda, modales).
+
+**¿Cómo se aplicó?**
+El calendario de fecha de nacimiento requiere:
+1. Clic para abrir el widget
+2. Selección de año desde dropdown dinámico
+3. Selección de mes desde dropdown dinámico
+4. Clic en día específico (evitando días de meses adyacentes)
+
+```javascript
+await page.selectOption('.react-datepicker__year-select', '2000');
+await page.selectOption('.react-datepicker__month-select', '4'); // Mayo
+await page.click('.react-datepicker__day--030:not(.react-datepicker__day--outside-month)');
+```
+
+**¿Por qué esta técnica?**
+Los elementos dinámicos son fuente común de tests inestables (flaky tests). Manejarlos correctamente garantiza tests confiables y mantenibles.
+
+---
+
+### Matriz de Trazabilidad: Técnicas vs Objetivos
+
+| Técnica | Objetivo Principal | Tipo de Defecto que Detecta |
+|---------|-------------------|----------------------------|
+| Partición de Equivalencia | Reducir casos manteniendo cobertura | Validaciones básicas faltantes |
+| Análisis de Valores Límite | Probar extremos de rangos | Errores off-by-one, validaciones de longitud |
+| Pruebas Combinatorias | Detectar interacciones inesperadas | Bugs que solo aparecen con combinaciones específicas |
+| Elementos Dinámicos | Estabilidad de automatización | Problemas de timing y sincronización |
+
+---
+
+### Cobertura de Funcionalidades
+
+| Funcionalidad del Formulario | Caso(s) de Prueba | Técnica Aplicada |
+|-----------------------------|-------------------|------------------|
+| Campos obligatorios | TC-01 | Partición de Equivalencia |
+| Validación de celular | TC-02, TC-03 | BVA |
+| Selección múltiple (hobbies) | TC-04.1 a TC-04.4 | Combinatoria |
+| Validación de email | TC-05 | Partición de Equivalencia |
+| Calendario dinámico | TC-06 | Elementos Dinámicos |
+| Dependencia estado/ciudad | TC-07 | Combinatoria |
+
+---
+
+### Decisiones de Diseño
+
+#### ¿Por qué Patrón AAA?
+Se utilizó el patrón **Arrange-Act-Assert** en todos los tests:
+- **Arrange:** Preparar datos y estado inicial
+- **Act:** Ejecutar las acciones del usuario
+- **Assert:** Verificar los resultados esperados
+
+Esto hace los tests más legibles, mantenibles y facilita identificar qué parte falla.
+
+#### ¿Por qué Selectores Centralizados?
+```javascript
+const SELECTORES = {
+    nombre: '#firstName',
+    apellido: '#lastName',
+    // ...
+};
+```
+Si el equipo de desarrollo cambia un ID, solo hay que actualizar un lugar en el código de pruebas.
+
+#### ¿Por qué force: true en clicks?
+```javascript
+await page.click(SELECTORES.botonEnviar, { force: true });
+```
+La página de DemoQA tiene anuncios que pueden interceptar clicks. `force: true` evita estos falsos negativos.
+
+---
+
 ## Notas Técnicas
 
 ### Técnicas de Prueba Utilizadas
